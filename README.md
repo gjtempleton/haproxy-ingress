@@ -242,6 +242,7 @@ A ConfigMap can be created with `kubectl create configmap`.
 The following parameters are supported:
 
 * `[0]` only in `canary` tag
+* `[1]` only in `snapshot` tag
 
 ||Name|Type|Default|
 |---|---|---|---|
@@ -265,6 +266,7 @@ The following parameters are supported:
 ||[`https-to-http-port`](#https-to-http-port)|port number|0 (do not listen)|
 ||[`load-server-state`](#load-server-state) (experimental)|[true\|false]|`false`|
 ||[`max-connections`](#max-connections)|number|`2000`|
+|`[1]`|[`modsecurity-endpoints`](#modsecurity-endpoints)|comma-separated list of IP:port (spoa)|no waf config|
 |`[0]`|[`no-tls-redirect-locations`](#no-tls-redirect-locations)|comma-separated list of url|`/.well-known/acme-challenge`|
 ||[`proxy-body-size`](#proxy-body-size)|number of bytes|unlimited|
 ||[`ssl-ciphers`](#ssl-ciphers)|colon-separated list|[link to code](https://github.com/jcmoraisjr/haproxy-ingress/blob/v0.4/pkg/controller/config.go#L35)|
@@ -443,6 +445,17 @@ Define the maximum number of concurrent connections on all proxies.
 Defaults to `2000` connections, which is also the HAProxy default configuration.
 
 http://cbonte.github.io/haproxy-dconv/1.8/configuration.html#3.2-maxconn
+
+### modsecurity-endpoints
+
+Configure a comma-separated list of `IP:port` of HAProxy agents (SPOA) for ModSecurity.
+The default configuration expects the `contrib/modsecurity` implementation.
+
+See also the [example](/examples/modsecurity) page.
+
+* http://cbonte.github.io/haproxy-dconv/1.8/configuration.html#9.3
+* https://www.haproxy.org/download/1.8/doc/SPOE.txt
+* https://github.com/jcmoraisjr/modsecurity-spoa
 
 ### no-tls-redirect-locations
 
