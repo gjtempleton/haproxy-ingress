@@ -40,8 +40,9 @@ type (
 		TCPEndpoints        []ingress.L4Service
 		UDPEndpoints        []ingress.L4Service
 		PassthroughBackends []*ingress.SSLPassthroughBackend
-		Cfg                 *HAProxyConfig
 		BackendSlots        map[string]*HAProxyBackendSlots
+		Procs               *HAProxyProcs
+		Cfg                 *HAProxyConfig
 	}
 	// HAProxyConfig has HAProxy specific configurations from ConfigMap
 	HAProxyConfig struct {
@@ -49,6 +50,9 @@ type (
 		SSLCiphers           string `json:"ssl-ciphers"`
 		SSLOptions           string `json:"ssl-options"`
 		SSLDHParam           `json:",squash"`
+		NbprocBalance        int    `json:"nbproc-balance"`
+		NbprocSSL            int    `json:"nbproc-ssl"`
+		Nbthread             int    `json:"nbthread"`
 		LoadServerState      bool   `json:"load-server-state"`
 		TimeoutHTTPRequest   string `json:"timeout-http-request"`
 		TimeoutConnect       string `json:"timeout-connect"`
@@ -157,5 +161,15 @@ type (
 	HAProxyBackendSlot struct {
 		BackendServerName string
 		BackendEndpoint   *ingress.Endpoint
+	}
+	// HAProxyProcs process and thread related configuration
+	HAProxyProcs struct {
+		Nbproc          int
+		NbprocBalance   int
+		NbprocSSL       int
+		Nbthread        int
+		BindprocBalance string
+		BindprocSSL     string
+		CPUMap          string
 	}
 )
