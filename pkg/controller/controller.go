@@ -17,32 +17,34 @@ limitations under the License.
 package controller
 
 import (
+	"io/ioutil"
+	"net/http"
+	"os"
+	"os/exec"
+	"strings"
+
 	"github.com/golang/glog"
 	"github.com/jcmoraisjr/haproxy-ingress/pkg/types"
 	"github.com/jcmoraisjr/haproxy-ingress/pkg/version"
 	"github.com/spf13/pflag"
-	"io/ioutil"
 	api "k8s.io/api/core/v1"
 	extensions "k8s.io/api/extensions/v1beta1"
 	"k8s.io/ingress/core/pkg/ingress"
 	"k8s.io/ingress/core/pkg/ingress/controller"
 	"k8s.io/ingress/core/pkg/ingress/defaults"
-	"net/http"
-	"os"
-	"os/exec"
-	"strings"
 )
 
 // HAProxyController has internal data of a HAProxyController instance
 type HAProxyController struct {
-	controller     *controller.GenericController
-	configMap      *api.ConfigMap
-	storeLister    *ingress.StoreLister
-	command        string
-	reloadStrategy *string
-	configFile     string
-	template       *template
-	currentConfig  *types.ControllerConfig
+	controller      *controller.GenericController
+	configMap       *api.ConfigMap
+	storeLister     *ingress.StoreLister
+	command         string
+	reloadStrategy  *string
+	openFileLogging *bool
+	configFile      string
+	template        *template
+	currentConfig   *types.ControllerConfig
 }
 
 // NewHAProxyController constructor
@@ -104,6 +106,8 @@ func (haproxy *HAProxyController) ConfigureFlags(flags *pflag.FlagSet) {
 	haproxy.reloadStrategy = flags.String("reload-strategy", "native",
 		`Name of the reload strategy. Options are: native (default) or multibinder`)
 	ingressClass := flags.Lookup("ingress-class")
+	haproxy.openFileLogging = flags.Bool("log-open-files", false,
+		`Skyscanner specific open files logging feature flag. If true will log the number of open files on every reload. Defaults to false.`)
 	if ingressClass != nil {
 		ingressClass.Value.Set("haproxy")
 		ingressClass.DefValue = "haproxy"
@@ -147,7 +151,11 @@ func (haproxy *HAProxyController) DefaultEndpoint() ingress.Endpoint {
 // OnUpdate regenerate the configuration file of the backend
 func (haproxy *HAProxyController) OnUpdate(cfg ingress.Configuration) error {
 	updatedConfig := newControllerConfig(&cfg, haproxy)
-
+	if *haproxy.openFileLogging {
+		filenrData, _ := ioutil.ReadFile("/proc/sys/fs/file-nr")
+		filesOpen := strings.Fields(string(filenrData))[0]
+		glog.Warningf("Current number of open files: %s", filesOpen)
+	}
 	reloadRequired := reconfigureBackends(haproxy.currentConfig, updatedConfig)
 	haproxy.currentConfig = updatedConfig
 
